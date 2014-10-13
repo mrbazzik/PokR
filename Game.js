@@ -14,4 +14,4 @@ function Action(player, type, sum, stage){
 }
 
 Game.prototype.STAGES = ['preflop', 'flop', 'turn', 'river'];
-Game.prototype.ACTION_TYPES = ['smallBlind', 'bigBlind', 'call', 'raise', 'fold'];
+Game.prototype.ACTION_TYPES = ['smallBlind', 'bigBlind', 'fold', 'check', 'call', 'raise'];

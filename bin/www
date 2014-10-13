@@ -1,0 +1,33 @@
+#!/usr/bin/env node
+//var debug = require('debug')('PokerRoom');
+var config = require('config');
+var app = require('../app');
+var log = require('libs/log')(module);
+var sockjs = require('sockjs');
+var http = require('http');
+//app.set('port', process.env.PORT || 3000);
+
+var server = http.createServer(app);
+
+
+
+
+// var server = app.listen(config.get('port'), function() {
+//
+//   log.debug('Express server listening on port ' + config.get('port'));
+// });
+
+var sockjs_opts = {sockjs_url: "http://cdn.sockjs.org/sockjs-0.3.min.js"};
+var sockServe = sockjs.createServer();
+sockServe.on('connection', function(conn) {
+
+  conn.on('data', function(message) {
+      conn.write(message);
+
+  });
+  sockServe.on('close', function() {});
+  });
+sockServe.installHandlers(server, {prefix:'/echo'});
+server.listen(config.get('port'), function(){
+  log.debug('Express server listening on port ' + config.get('port'));
+});

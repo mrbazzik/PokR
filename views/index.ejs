@@ -1,0 +1,39 @@
+<% layout('layout') -%>
+<% block('title', 'Game prototype') -%>
+<form name="commandForm">
+  <input type='text' name='command'></input>
+  <input type='submit' value='Submit'></input>
+</form>
+
+<script>
+var sock;
+var command;
+$(document.forms['commandForm']).on('submit', function(){
+  //alert('opa');
+  command = $("input[name='command']").val();
+  if(command == "s"){
+  sock = new SockJS('http://localhost:3000/echo');
+   sock.onopen = function() {
+       console.log('open');
+       //alert('hui');
+       sock.send('haha');
+   };
+   sock.onmessage = function(e) {
+     console.log("yeah");
+       console.log('message', e.data);
+   };
+   sock.onclose = function() {
+       console.log('close');
+   };
+   sock.onerror = function(e) {
+     console.log('error');
+       console.log(e);
+   };
+   //sock.send('haha');
+}else
+  {
+   sock.send(command);
+  }
+});
+
+</script>
