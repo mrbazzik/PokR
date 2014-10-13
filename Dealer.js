@@ -1,7 +1,7 @@
 var Card  = require('card');
 function Dealer(){
   this._dealed = [];
-  
+
 }
 
 
@@ -29,8 +29,8 @@ Dealer.prototype.isDealed = function(card){
 };
 
 Dealer.prototype.getCard = function(){
-  var cardValue = Math.round(Math.random()*12);
-  var cardSuit = Math.round(Math.random()*3);
+  var cardValue = Math.round(Math.random()*(Card.prototype.VALS.length-1));
+  var cardSuit = Math.round(Math.random()*(Card.prototype.SUITS.length-1));
   return new Card(cardValue, cardSuit);
 
 };
