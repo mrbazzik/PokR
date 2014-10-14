@@ -1,22 +1,50 @@
 <% layout('layout') -%>
 <% block('title', 'Game prototype') -%>
-<form name="commandForm">
   <input type='button' name="start" value='Start Game'></input>
   <br>
   <input type='text' name='command'></input>
   <input type='button' name="send" value='Command'></input>
-</form>
-
+  <div id="hisHand"></div>
+  <div id="board"></div>
+  <div id="myHand"></div>
 <script>
 var sock;
 $("input[name='start']").on('click', function(){
-  sock = new SockJS('/gameproc');
+  if(!sock){
+    sock = createSockClient();
+  }
+  else{
+    sock.send('START_HAND');
+  }
+
+
+});
+$("input[name='send']").on('click', function(){
+
+  sock.send($("input[name='command']").val());
+
+});
+
+function createSockClient(){
+  var sock = new SockJS('/gameproc');
    sock.onopen = function() {
        console.log('open');
+       sock.send('START_HAND');
     };
    sock.onmessage = function(e) {
 
        console.log('message', e.data);
+       var ask = e.data;
+       if(ask != 'END_HAND'){
+         ask = JSON.parse(ask);
+         $('#myHand').text('My hand: '+ask.myHand);
+         $('#board').text('Board: '+ask.board);
+         $('#hisHand').text('His hand: '+ask.hisHand);
+     } else {
+         $('#myHand').text('');
+         $('#board').text('PRESS START');
+         $('#hisHand').text('');
+     }
    };
    sock.onclose = function() {
        console.log('close');
@@ -24,11 +52,7 @@ $("input[name='start']").on('click', function(){
    sock.onerror = function(e) {
       console.log(e);
    };
-});
-$("input[name='send']").on('click', function(){
-
-  sock.send($("input[name='command']").val());
-
-});
+   return sock;
+}
 
 </script>

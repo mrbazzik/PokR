@@ -17,10 +17,19 @@ var sockServe = sockjs.createServer();
 sockServe.on('connection', function(conn) {
   log.debug('starting game...');
   var table = new Table(2);
-  table.runGame();
   conn.on('data', function(message) {
-      conn.write(message);
 
+      switch(message){
+        case 'START_HAND':
+          table.startHand();
+          conn.write(table.goOn());
+          break;
+        default:
+          var state = table.goOn();
+          if(state) conn.write(state);
+          else conn.write('END_HAND');
+          break;
+      }
   });
   sockServe.on('close', function() {});
   });

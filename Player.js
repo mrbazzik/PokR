@@ -1,4 +1,5 @@
-function Player{
+function Player(stack){
+  this._Id
   this._user = {};
-  this._stack = 0;
+  this._stack = stack;
 }
