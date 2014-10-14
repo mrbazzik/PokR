@@ -12,15 +12,17 @@ var server = app.listen(config.get('port'), function() {
 
   log.debug('Express server listening on port ' + config.get('port'));
 });
-
+var users = [];
 var sockServe = sockjs.createServer();
 sockServe.on('connection', function(conn) {
   log.debug('starting game...');
+  users.push(conn);
   var table = new Table(2);
   conn.on('data', function(message) {
 
       switch(message){
         case 'START_HAND':
+          users.forEach(function(item){item.write(new Date())});
           table.startHand();
           conn.write(table.goOn());
           break;

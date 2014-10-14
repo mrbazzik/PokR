@@ -35,17 +35,23 @@ function createSockClient(){
 
        console.log('message', e.data);
        var ask = e.data;
-       if(ask != 'END_HAND'){
+       if(ask == 'END_HAND'){
+         $('#myHand').text('');
+         $('#board').text('PRESS START');
+         $('#hisHand').text('');
+
+     }else if(ask == 'GAME_STARTED') {
+       $('#myHand').text('');
+       $('#board').text(e.data);
+       $('#hisHand').text('');
+     }
+     else {
          ask = JSON.parse(ask);
          $('#myHand').text('My hand: '+ask.myHand);
          $('#board').text('Board: '+ask.board);
          $('#hisHand').text('His hand: '+ask.hisHand);
-     } else {
-         $('#myHand').text('');
-         $('#board').text('PRESS START');
-         $('#hisHand').text('');
-     }
    };
+ }
    sock.onclose = function() {
        console.log('close');
    };
