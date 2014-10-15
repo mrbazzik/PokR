@@ -38,9 +38,10 @@ Action.prototype.toString = function(){
   return "Player "+this.player.getId()+" makes "+this.type+" for "+this.sumForBank;
 }
 
-function Choice(actions, sum){
+function Choice(actions, sum, answering){
     this.actions = actions;
     this.sum = sum;
+    this.answering = answering;
 }
 
 Hand.prototype.SEATS = ['SB', 'BB', 'UTG1', 'UTG2', 'UTG3', 'MP1', 'MP2', 'MP3', 'CO', 'BU'];
@@ -52,11 +53,11 @@ Hand.prototype.MAX_NUM_RAISES = 3;
 
 Hand.prototype._getChoice = function(seat){
     if(seat == 'SB'){
-      return new Choice(this.ACTIONS.slice(-3), this._table.blinds[1] - this._table.blinds[0]);
+      return new Choice(this.ACTIONS.slice(-3), this._table.blinds[1] - this._table.blinds[0], true);
     }else if(seat == 'BB'){
-      return new Choice(this.ACTIONS.slice(2,3).concat(this.ACTIONS.slice(-1)), 0);
+      return new Choice(this.ACTIONS.slice(2,3).concat(this.ACTIONS.slice(-1)), 0, true);
     }else{
-      return new Choice(this.ACTIONS.slice(-3), this._table.blinds[1]);
+      return new Choice(this.ACTIONS.slice(-3), this._table.blinds[1], true);
     }
 
   return choices;
@@ -64,7 +65,7 @@ Hand.prototype._getChoice = function(seat){
 
 Hand.prototype._makeSeats = function(){
   if(!this._table.getCurrentHand()){
-    var indSB = Math.round(Math.random()*this._table.players.length);
+    var indSB = Math.round(Math.random()*(this._table.players.length-1));
   }else{
     indSB = this._getNextSB();
   }
@@ -204,27 +205,34 @@ Hand.prototype.getStates = function(){
 Hand.prototype.handleDecision = function(message){
     var action = new Action(this._table.getPlayer(message.id), message.action, +message.sum, this._currentStage);
     this._actions.push(action);
-    action.player.makeBet(+message.sum);
-    if(message.action == 'RAISE') this._numRaises++;
+
+    if(message.action == 'RAISE') {
+      action.player.makeBet(+message.sum, true);
+      this._numRaises++;
+    } else {
+      action.player.makeBet(+message.sum, false);
+
+    }
     this._editChoices(action);
     return this._checkTrade();
 }
 
 Hand.prototype._checkTrade = function(){
   var bank = 0;
-  var tradeRound = null;
-  var bankInput = null;
+//  var tradeRound = null;
+  //var bankInput = null;
   for(var i=0; i<this._table.players.length; i++){
-    var player = this._table.players[i];
-    pTradeRound = player.getTradeRounds();
-    pBankInput = player.getBankInput();
-    if(tradeRound == null){
-      tradeRound = pTradeRound;
-      bankInput = pBankInput;
-    } else if(player.getStack() != 0 && (pBankInput != bankInput || pTradeRound != tradeRound)){
+    //var player = this._table.players[i];
+    // pTradeRound = player.getTradeRounds();
+    // pBankInput = player.getBankInput();
+    // if(tradeRound == null){
+    //   tradeRound = pTradeRound;
+    //   bankInput = pBankInput;
+    //} else
+      if(this._table.players[i].answering){
       return true;
     } else {
-      bank+=pBankInput;
+      bank+=this._table.players[i].getBankInput();
     }
   }
   this._bank+=bank;
@@ -238,11 +246,11 @@ Hand.prototype._editChoices = function(action){
       if(player == action.player){
         var actions = ['CHECK'];
         if(useRaise) actions.push('RAISE');
-        player.currentChoice = new Choice(actions, 0);
+        player.currentChoice = new Choice(actions, 0, false);
       }else if(action.type == 'RAISE'){
         actions = ['FOLD', 'CALL'];
         if(useRaise) actions.push('RAISE');
-        player.currentChoice = new Choice(actions, action.player.getBankInput() - player.getBankInput());
+        player.currentChoice = new Choice(actions, action.player.getBankInput() - player.getBankInput(), true);
       }
     }
 }

@@ -9,7 +9,8 @@
     <div id="seat"></div>
     <div id="stack"></div>
   </div>
-  <div id="choice"><input id="initSum" type="hidden"></input></div>
+  <div id="choice"></div>
+  <input id="initSum" type="hidden"></input>
   <ul id="log"></ul>
 <script>
 var sock;
@@ -74,7 +75,7 @@ function createSockClient(){
          $('#seat').text('Seat: '+state.seat);
          $('#stack').text('Stack: '+state.stack);
          if(state.lastAction){
-           $('<li>').val(state.lastAction).appendTo($('#log'));
+           $('<li>').text(state.lastAction).appendTo($('#log'));
 
          }
          if(state.choice){

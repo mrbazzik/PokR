@@ -7,7 +7,7 @@ function Player(id, stack, real){
   this.seat = '';
   this.currentChoice = {};
   this._putInBank = 0;
-  this._tradeRounds = 0;
+  //this._tradeRounds = 0;
 }
 
 Player.prototype.getId = function(){
@@ -22,18 +22,18 @@ Player.prototype.getStack = function(){
   return this._stack;
 }
 
-Player.prototype.getTradeRounds = function(){
-  return this._tradeRounds;
-}
+// Player.prototype.getTradeRounds = function(){
+//   return this._tradeRounds;
+// }
 
 Player.prototype.initForHand = function(){
   this._putInBank = 0;
-  this._tradeRounds = 0;
+  //this._tradeRounds = 0;
 }
 
 Player.prototype.makeBet = function(bet){
   this._stack-=bet;
   this._putInBank+=bet;
-  this._tradeRounds++;
+//  if(newRound) this._tradeRounds++;
 }
 module.exports = Player;
