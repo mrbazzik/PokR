@@ -13,23 +13,76 @@ var server = app.listen(config.get('port'), function() {
   log.debug('Express server listening on port ' + config.get('port'));
 });
 var users = [];
+var table;
+function sendStates(table, states){
+//  getUser('1').conn.write(states[0]);
+var answer = null;
+  for(var i=0; i<states.length; i++){
+    var state = states[i];
+    if(state.real){
+      getUser(state.id).conn.write(JSON.stringify(state));
+    } else {
+      var result = table.handleState(state);
+      if(result != null) answer = result;
+    }
+  }
+  return answer;
+
+}
+
+function getUser(id){
+  for(var i=0;  i<users.length; i++){
+    if(users[i].id == id) return users[i];
+  }
+}
 var sockServe = sockjs.createServer();
 sockServe.on('connection', function(conn) {
   log.debug('starting game...');
-  users.push(conn);
-  var table = new Table(2);
+  users.push({'id': '1', 'conn': conn});
+  table = new Table(2, users, [10, 20], 1000);
   conn.on('data', function(message) {
-
-      switch(message){
+      message = JSON.parse(message);
+      switch(message.type){
         case 'START_HAND':
-          users.forEach(function(item){item.write(new Date())});
+
           table.startHand();
-          conn.write(table.goOn());
+          var stage = table.nextStage();
+          if(stage){
+            var states = table.getStates();
+            log.debug(states);
+            var answer = sendStates(table, states);
+
+            while(answer != null) {//it means it was order for unreal player, let's handle all unreals
+              states = table.getStates();
+              log.debug(states);
+              answer = sendStates(table, states);
+            }
+
+          }else{
+            conn.write('END_HAND');
+          }
+          break;
+        case 'DECISION':
+          var tradeRound = table.handleDecision(message.data);
+          if(!tradeRound){
+            var stage = table.nextStage();
+            if(!stage){
+              conn.write('END_HAND');
+              break;
+            }
+          }
+          states = table.getStates();
+          log.debug(states);
+          var answer = sendStates(table, states);
+
+          while(answer != null) {//it means it was order for unreal player, let's handle all unreals
+            states = table.getStates();
+            log.debug(states);
+            answer = sendStates(table, states);
+          }
           break;
         default:
-          var state = table.goOn();
-          if(state) conn.write(state);
-          else conn.write('END_HAND');
+          conn.write('END_HAND');
           break;
       }
   });

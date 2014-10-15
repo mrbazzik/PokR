@@ -3,25 +3,54 @@
   <input type='button' name="start" value='Start Game'></input>
   <br>
   <input type='text' name='command'></input>
-  <input type='button' name="send" value='Command'></input>
-  <div id="hisHand"></div>
-  <div id="board"></div>
-  <div id="myHand"></div>
+  <div id="field">
+    <div id="board"></div>
+    <div id="hand"></div>
+    <div id="seat"></div>
+    <div id="stack"></div>
+  </div>
+  <div id="choice"><input id="initSum" type="hidden"></input></div>
+  <ul id="log"></ul>
 <script>
 var sock;
+var startHand = JSON.stringify({
+  type: 'START_HAND',
+  data: ''
+});
+
 $("input[name='start']").on('click', function(){
   if(!sock){
     sock = createSockClient();
   }
   else{
-    sock.send('START_HAND');
+
+    sock.send(startHand);
   }
 
 
 });
-$("input[name='send']").on('click', function(){
-
-  sock.send($("input[name='command']").val());
+$('#choice').on('click', '.answer', function(){
+  var act = $(this).val();
+  var sum = $('#sum').val();
+  switch(act){
+    case 'CHECK':
+    case 'FOLD':
+      sum = 0;
+      break;
+    case 'CALL':
+      sum = $('#initSum').val();
+      break;
+  }
+  var answer = {
+    'id': '1',
+    'action': act,
+    'sum': sum
+  };
+  sock.send(JSON.stringify({
+    type: 'DECISION',
+    data: answer
+  }));
+  $('#choice').empty();
 
 });
 
@@ -29,27 +58,37 @@ function createSockClient(){
   var sock = new SockJS('/gameproc');
    sock.onopen = function() {
        console.log('open');
-       sock.send('START_HAND');
+       sock.send(startHand);
     };
    sock.onmessage = function(e) {
-
        console.log('message', e.data);
-       var ask = e.data;
-       if(ask == 'END_HAND'){
-         $('#myHand').text('');
+       var state = e.data;
+       if(state == 'END_HAND'){
+         $('#hand').text('');
          $('#board').text('PRESS START');
-         $('#hisHand').text('');
-
-     }else if(ask == 'GAME_STARTED') {
-       $('#myHand').text('');
-       $('#board').text(e.data);
-       $('#hisHand').text('');
      }
      else {
-         ask = JSON.parse(ask);
-         $('#myHand').text('My hand: '+ask.myHand);
-         $('#board').text('Board: '+ask.board);
-         $('#hisHand').text('His hand: '+ask.hisHand);
+         state = JSON.parse(state);
+         $('#hand').text('My hand: '+state.hand);
+         $('#board').text('Board: '+state.board);
+         $('#seat').text('Seat: '+state.seat);
+         $('#stack').text('Stack: '+state.stack);
+         if(state.lastAction){
+           $('<li>').val(state.lastAction).appendTo($('#log'));
+
+         }
+         if(state.choice){
+           $('#initSum').val(state.choice.sum);
+           var choice = $('#choice');
+           choice.append($('<input id="sum">').val(state.choice.sum));
+           var buttons = $('<div>');
+           state.choice.actions.forEach(function(item){
+             buttons.append($('<button>').val(item).text(item).addClass('answer'));
+           });
+           choice.append(buttons);
+
+         }
+
    };
  }
    sock.onclose = function() {
