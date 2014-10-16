@@ -48,7 +48,7 @@ Hand.prototype.SEATS = ['SB', 'BB', 'UTG1', 'UTG2', 'UTG3', 'MP1', 'MP2', 'MP3',
 
 //TODO: make constants?
 Hand.prototype.STAGES = ['PREFLOP', 'FLOP', 'TURN', 'RIVER', 'SHOWDOWN'];
-Hand.prototype.ACTIONS = ['SMALL_BLIND', 'BIG_BLIND', 'CHECK', 'FOLD', 'CALL', 'RAISE'];
+Hand.prototype.ACTIONS = ['SMALL_BLIND', 'BIG_BLIND', 'CHECK', 'BET', 'FOLD', 'CALL', 'RAISE'];
 Hand.prototype.MAX_NUM_RAISES = 3;
 
 Hand.prototype._getChoice = function(seat){
@@ -56,12 +56,12 @@ Hand.prototype._getChoice = function(seat){
     if(seat == 'SB'){
       return new Choice(this.ACTIONS.slice(-3), this._table.blinds[1] - this._table.blinds[0], true);
     }else if(seat == 'BB'){
-      return new Choice(this.ACTIONS.slice(2,3).concat(this.ACTIONS.slice(-1)), 0, true);
+      return new Choice(this.ACTIONS.slice(2,4), 0, true);
     }else{
       return new Choice(this.ACTIONS.slice(-3), this._table.blinds[1], true);
     }
   }else {
-    return new Choice(this.ACTIONS.slice(-4), this._table.blinds[1], true);
+    return new Choice(this.ACTIONS.slice(2, 5), this._table.blinds[1], true);
   }
 
   return choices;
@@ -149,7 +149,7 @@ Hand.prototype.getState = function(player, withChoice){
 };
 
 Hand.prototype._getFirstPlayerForTrade = function(){
-  if(this._currentStage = this.STAGES[0]){
+  if(this._currentStage == this.STAGES[0]){
     var indPlayer = this._findSeat('BB');
     var player = this._nextPlayer(indPlayer);
   }else{
@@ -218,13 +218,9 @@ Hand.prototype.handleDecision = function(message){
     var action = new Action(this._table.getPlayer(message.id), message.action, +message.sum, this._currentStage);
     this._actions.push(action);
 
-    if(message.action == 'RAISE') {
-      action.player.makeBet(+message.sum, true);
-      this._numRaises++;
-    } else {
-      action.player.makeBet(+message.sum, false);
+    if(message.action == 'RAISE') this._numRaises++;
+    action.player.makeBet(+message.sum);
 
-    }
     this._editChoices(action);
     return this._checkTrade();
 }
@@ -256,10 +252,10 @@ Hand.prototype._editChoices = function(action){
       var player = this._table.players[i];
       var useRaise = (this._numRaises < this.MAX_NUM_RAISES);
       if(player == action.player){
-        var actions = ['CHECK'];
-        if(useRaise) actions.push('RAISE');
+        var actions = this.ACTIONS.slice(2, 5);
+        //if(useRaise) actions.push('RAISE');
         player.currentChoice = new Choice(actions, 0, false);
-      }else if(action.type == 'RAISE'){
+      }else if(action.type == 'RAISE' || action.type == 'BET'){
         actions = ['FOLD', 'CALL'];
         if(useRaise) actions.push('RAISE');
         player.currentChoice = new Choice(actions, action.player.getBankInput() - player.getBankInput(), true);
