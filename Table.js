@@ -74,7 +74,7 @@ Table.prototype.handleState = function(message){
   if(this._currentHand && message.choice){
     if(message.choice.actions.indexOf('CALL')+1) {
       var act = 'CALL';
-      var sum = message.sum;
+      var sum = message.choice.sum;
     }
     else if (message.choice.actions.indexOf('RAISE')+1){
       act = 'RAISE';

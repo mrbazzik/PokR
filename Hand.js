@@ -16,7 +16,7 @@ function Hand(table){
   this._board = [];
   this._currentStage = null;
   this._tradePlayer = null;
-  this._makeSeats();
+  //this._makeSeats();
   this._numRaises = 0;
 
   this._table.players.forEach(function(item){
@@ -52,6 +52,7 @@ Hand.prototype.ACTIONS = ['SMALL_BLIND', 'BIG_BLIND', 'CHECK', 'FOLD', 'CALL', '
 Hand.prototype.MAX_NUM_RAISES = 3;
 
 Hand.prototype._getChoice = function(seat){
+  if(this._currentStage == 'PREFLOP'){
     if(seat == 'SB'){
       return new Choice(this.ACTIONS.slice(-3), this._table.blinds[1] - this._table.blinds[0], true);
     }else if(seat == 'BB'){
@@ -59,22 +60,31 @@ Hand.prototype._getChoice = function(seat){
     }else{
       return new Choice(this.ACTIONS.slice(-3), this._table.blinds[1], true);
     }
+  }else {
+    return new Choice(this.ACTIONS.slice(-4), this._table.blinds[1], true);
+  }
 
   return choices;
 };
 
 Hand.prototype._makeSeats = function(){
-  if(!this._table.getCurrentHand()){
-    var indSB = Math.round(Math.random()*(this._table.players.length-1));
-  }else{
-    indSB = this._getNextSB();
+  var indSB = this._getNextSB();
+  if(!indSB){
+    indSB = Math.round(Math.random()*(this._table.players.length-1));
   }
+
   if(indSB == this._table.players.length-1) var correction = this._table.players.length;
   else correction = 0;
   for(var i=0; i<this._table.players.length; i++){
-    var seat = this.SEATS.slice(i - indSB + correction)[0];
-    this._table.players[i].seat = seat;
-    this._table.players[i].currentChoice = this._getChoice(seat);
+    var player = this._table.players[i];
+    if(i == indSB) {
+      var seat = 'SB';
+      }
+    else {
+      seat = this.SEATS.slice(i - indSB + correction)[0];
+    }
+    player.seat = seat;
+    player.currentChoice = this._getChoice(seat);
   }
 };
 
@@ -149,6 +159,7 @@ Hand.prototype._getFirstPlayerForTrade = function(){
 };
 
 Hand.prototype.nextStage = function(){
+
   if(!this._currentStage) {
     var indStage = 0;
     this._currentStage = this.STAGES[0];
@@ -157,8 +168,9 @@ Hand.prototype.nextStage = function(){
     indStage = this.STAGES.indexOf(this._currentStage);
     indStage++;
     this._currentStage = this.STAGES[indStage];
-    this._makeSeats();
+    //this._makeSeats();
   }
+  this._makeSeats();
 
   if(indStage < this.STAGES.length-1){
     this.deal();
@@ -229,7 +241,7 @@ Hand.prototype._checkTrade = function(){
     //   tradeRound = pTradeRound;
     //   bankInput = pBankInput;
     //} else
-      if(this._table.players[i].answering){
+      if(this._table.players[i].currentChoice.answering){
       return true;
     } else {
       bank+=this._table.players[i].getBankInput();
