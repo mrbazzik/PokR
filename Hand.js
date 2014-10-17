@@ -35,7 +35,9 @@ function Action(player, type, sum, stage){
 }
 
 Action.prototype.toString = function(){
-  return "Player "+this.player.getId()+" makes "+this.type+" for "+this.sumForBank;
+  var str = "Player "+this.player.getId()+" makes "+this.type;
+  if(this.type != 'CHECK') str+= " for "+this.sumForBank;
+  return str;
 }
 
 function Choice(actions, sum, answering){
@@ -83,6 +85,8 @@ Hand.prototype._makeSeats = function(){
     else {
       seat = this.SEATS.slice(i - indSB + correction)[0];
     }
+    if(seat == 'SB') player.makeBet(this._table.blinds[0]);
+    else if(seat == 'BB') player.makeBet(this._table.blinds[1]);
     player.seat = seat;
     player.currentChoice = this._getChoice(seat);
   }
@@ -176,7 +180,7 @@ Hand.prototype.nextStage = function(){
     this.deal();
     this._tradePlayer = null;
     this._numRaises = 0;
-    return true;
+    return this._currentStage;
     //trade round
     // var player = this._getFirstPlayerForTrade();
     // return this.getState(player, true);

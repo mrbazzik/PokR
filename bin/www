@@ -5,6 +5,7 @@ var app = require('../app');
 var log = require('libs/log')(module);
 var sockjs = require('sockjs');
 var Table = require('Table');
+var Message = require('Message');
 
 //app.set('port', process.env.PORT || 3000);
 
@@ -20,7 +21,8 @@ var answer = null;
   for(var i=0; i<states.length; i++){
     var state = states[i];
     if(state.real){
-      getUser(state.id).conn.write(JSON.stringify(state));
+      sendMessage('STATE', state, state.id);
+      //getUser(state.id).conn.write(JSON.stringify(state));
     } else {
       var result = table.handleState(state);
       if(result != null) answer = result;
@@ -28,6 +30,23 @@ var answer = null;
   }
   return answer;
 
+}
+function sendMessage(type, data, userId){
+  var message = {
+    type: type,
+    data: data
+  };
+  var strMessage = JSON.stringify(message);
+  if(userId != undefined){
+    var user = getUser(userId);
+    if(user) {
+      user.conn.write(strMessage);
+    }
+  } else {
+    users.forEach(function(item){
+      item.conn.write(strMessage);
+    });
+  }
 }
 
 function getUser(id){
@@ -44,22 +63,19 @@ sockServe.on('connection', function(conn) {
       message = JSON.parse(message);
       switch(message.type){
         case 'START_HAND':
-
           table.startHand();
           var stage = table.nextStage();
           if(stage){
             var states = table.getStates();
             log.debug(states);
             var answer = sendStates(table, states);
-
             while(answer != null) {//it means it was order for unreal player, let's handle all unreals
               states = table.getStates();
               log.debug(states);
-              answer = sendStates(table, states);
+              answer = sendStates(table, states, stage);
             }
-
           }else{
-            conn.write('END_HAND');
+            sendMessage('SERVICE', 'END_HAND');
           }
           break;
         case 'DECISION':
@@ -67,14 +83,13 @@ sockServe.on('connection', function(conn) {
           if(!tradeRound){
             var stage = table.nextStage();
             if(!stage){
-              conn.write('END_HAND');
+              sendMessage('SERVICE', 'END_HAND');
               break;
             }
           }
           states = table.getStates();
           log.debug(states);
-          var answer = sendStates(table, states);
-
+          var answer = sendStates(table, states, stage);
           while(answer != null) {//it means it was order for unreal player, let's handle all unreals
             states = table.getStates();
             log.debug(states);
@@ -82,7 +97,7 @@ sockServe.on('connection', function(conn) {
           }
           break;
         default:
-          conn.write('END_HAND');
+          sendMessage('SERVICE', 'END_HAND');
           break;
       }
   });
