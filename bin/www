@@ -68,7 +68,7 @@ sockServe.on('connection', function(conn) {
               table.startHand();
               var stage = table.nextStage();
               if(stage){
-                sendMessage('STAGE', stage);
+                //sendMessage('STAGE', stage);
                 var states = table.getStates();
                 log.debug(states);
                 var answer = sendStates(table, states);
@@ -84,6 +84,7 @@ sockServe.on('connection', function(conn) {
             default:
               break;
           }
+          break;
         case 'DECISION':
           var tradeRound = table.handleDecision(message.data);
           if(!tradeRound){
@@ -92,8 +93,9 @@ sockServe.on('connection', function(conn) {
               sendMessage('SERVICE', 'END_HAND');
               break;
             }
+            //sendMessage('STAGE', stage);
           }
-          sendMessage('STAGE', stage);
+
           states = table.getStates();
           log.debug(states);
           var answer = sendStates(table, states);

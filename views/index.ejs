@@ -74,6 +74,10 @@ function createSockClient(){
              default:
                break;
             }
+            break;
+         case 'STAGE':
+           $('<li>').text(message.data).appendTo($('#log'));
+           break;
          case 'STATE':
           // state = JSON.parse(state);
            var state = message.data;
