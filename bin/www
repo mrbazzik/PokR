@@ -15,20 +15,21 @@ var server = app.listen(config.get('port'), function() {
 });
 var users = [];
 var table;
-function sendStates(table, states){
+function sendStates(states){
 //  getUser('1').conn.write(states[0]);
-var answer = null;
+//var answer = null;
   for(var i=0; i<states.length; i++){
     var state = states[i];
     if(state.real){
       sendMessage('STATE', state, state.id);
       //getUser(state.id).conn.write(JSON.stringify(state));
-    } else {
-      var result = table.handleState(state);
-      if(result != null) answer = result;
     }
+    // else {
+    //   var result = table.handleState(state);
+    //   if(result != null) answer = result;
+    // }
   }
-  return answer;
+  //return answer;
 
 }
 function sendMessage(type, data, userId){
@@ -54,6 +55,25 @@ function getUser(id){
     if(users[i].id == id) return users[i];
   }
 }
+
+function moveToNextUser(table){
+  var states = table.getStates();
+  log.debug(states);
+  var state = getChoicer(states);
+  while(!state.real){
+    table.handleState(state);
+    states = table.getStates();
+    sendStates(states);
+    state = getChoicer(states);
+  }
+}
+
+function getChoicer(states){
+  for(var i=0, l=states.length; i<l; i++){
+    if(states[i].choice) return states[i];
+  }
+}
+
 var sockServe = sockjs.createServer();
 sockServe.on('connection', function(conn) {
   log.debug('starting game...');
@@ -69,14 +89,7 @@ sockServe.on('connection', function(conn) {
               var stage = table.nextStage();
               if(stage){
                 //sendMessage('STAGE', stage);
-                var states = table.getStates();
-                log.debug(states);
-                var answer = sendStates(table, states);
-                while(answer != null) {//it means it was order for unreal player, let's handle all unreals
-                  states = table.getStates();
-                  log.debug(states);
-                  answer = sendStates(table, states);
-                }
+                moveToNextUser(table);
               }else{
                 sendMessage('SERVICE', 'END_HAND');
               }
@@ -96,14 +109,7 @@ sockServe.on('connection', function(conn) {
             //sendMessage('STAGE', stage);
           }
 
-          states = table.getStates();
-          log.debug(states);
-          var answer = sendStates(table, states);
-          while(answer != null) {//it means it was order for unreal player, let's handle all unreals
-            states = table.getStates();
-            log.debug(states);
-            answer = sendStates(table, states);
-          }
+          moveToNextUser(table);
           break;
         default:
           sendMessage('SERVICE', 'END_HAND');
