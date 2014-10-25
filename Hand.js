@@ -167,6 +167,7 @@ Hand.prototype.nextStage = function(){
   if(!this._currentStage) {
     var indStage = 0;
     this._currentStage = this.STAGES[0];
+    this._makeSeats();
   }
   else{
     indStage = this.STAGES.indexOf(this._currentStage);
@@ -174,7 +175,7 @@ Hand.prototype.nextStage = function(){
     this._currentStage = this.STAGES[indStage];
     //this._makeSeats();
   }
-  this._makeSeats();
+  //this._makeSeats();
 
   if(indStage < this.STAGES.length-1){
     this.deal();

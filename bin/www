@@ -59,11 +59,19 @@ function getUser(id){
 function moveToNextUser(table){
   var states = table.getStates();
   log.debug(states);
+  sendStates(states);
   var state = getChoicer(states);
-  while(!state.real){
-    table.handleState(state);
-    states = table.getStates();
-    sendStates(states);
+  var tradeRound = true;
+  while(!state.real && tradeRound){
+    tradeRound = table.handleState(state);
+    sendStates(table.getStates());
+    if(!tradeRound){
+      var stage = table.nextStage();
+      sendStates(table.getStates());
+      if(!stage){
+        sendMessage('SERVICE', 'END_HAND');
+      }
+    }
     state = getChoicer(states);
   }
 }
@@ -101,6 +109,7 @@ sockServe.on('connection', function(conn) {
         case 'DECISION':
           var tradeRound = table.handleDecision(message.data);
           if(!tradeRound){
+            sendStates(table.getStates());
             var stage = table.nextStage();
             if(!stage){
               sendMessage('SERVICE', 'END_HAND');
