@@ -7,6 +7,8 @@ function Player(id, stack, real){
   this.seat = '';
   this.currentChoice = {};
   this._putInBank = 0;
+  this._winSum = 0;
+  this.isWinner = false;
   //this._tradeRounds = 0;
 }
 
@@ -27,8 +29,34 @@ Player.prototype.getStack = function(){
 // }
 
 Player.prototype.initForHand = function(){
-  this._putInBank = 0;
+  this._winSum = 0;
+  this.isWinner = false;
   //this._tradeRounds = 0;
+}
+
+Player.prototype.calcWinSum = function(players){
+  var sum = 0;
+  for(var i=0, l=players.length; i<l; i++){
+    var pBankInput = players[i].getBankInput();
+    if(pBankInput < this._putInBank){ //if exited in the middle of trade for example
+      sum+=pBankInput;
+    }else {
+      sum+=this._putInBank;
+    }
+  }
+  this._putInBank = 0;
+  this._winSum+=sum;
+}
+
+Player.prototype.makeWin = function(sum, winner){
+  this._stack+=sum;
+  this.isWinner = winner;
+  //this._winSum = 0;
+  //return bank;
+}
+
+Player.prototype.getWinSum = function(){
+  return this._winSum;
 }
 
 Player.prototype.makeBet = function(bet){

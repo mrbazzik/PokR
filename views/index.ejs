@@ -3,9 +3,13 @@
   <input type='button' name="start" value='Start Game'></input>
   <div id="field">
     <div id="board"></div>
+    <div id="bank"></div>
+    <ul id="stacks">Stacks</ul>
+    ==================================================================
     <div id="hand"></div>
     <div id="seat"></div>
     <div id="stack"></div>
+
   </div>
   <div id="choice"></div>
   <input id="initSum" type="hidden"></input>
@@ -23,6 +27,7 @@ function sendMessage(type, data){
 
 
 $("input[name='start']").on('click', function(){
+  $('#log').empty();
   if(!sock){
     sock = createSockClient();
   }
@@ -55,6 +60,21 @@ $('#choice').on('click', '.answer', function(){
 
 });
 
+function updateMoneyInfo(state){
+  $('#bank').text("Bank: "+state.bank);
+  $('#stacks').empty();
+  for(var i=0, l = state.stacks.length; i<l; i++){
+    var stack = state.stacks[i];
+    var key = Object.keys(stack)[0];
+    if(key!='1'){
+      $('<li>').text(key+": "+stack[key]).appendTo($('#stacks'));
+    } else{
+
+      $('#stack').text('Stack: '+stack[key]);
+    }
+  }
+}
+
 function createSockClient(){
   var sock = new SockJS('/gameproc');
    sock.onopen = function() {
@@ -77,6 +97,7 @@ function createSockClient(){
             break;
          case 'STAGE':
            $('<li>').text(message.data).appendTo($('#log'));
+           //$('#bank').text("Bank: 0");
            break;
          case 'STATE':
           // state = JSON.parse(state);
@@ -84,7 +105,7 @@ function createSockClient(){
            $('#hand').text('My hand: '+state.hand);
            $('#board').text('Board: '+state.board);
            $('#seat').text('Seat: '+state.seat);
-           $('#stack').text('Stack: '+state.stack);
+           updateMoneyInfo(state);
            if(state.lastAction){
              $('<li>').text(state.lastAction).appendTo($('#log'));
 
@@ -100,6 +121,15 @@ function createSockClient(){
              choice.append(buttons);
 
            }
+           break;
+         case 'SHOWDOWN':
+           state = message.data;
+           updateMoneyInfo(state);
+           var infoWin = state.infoWin;
+           if(state.winner) {
+             infoWin = "YOU'RE A WINNER\n"+infoWin;
+           }
+           $('<li>').text(infoWin).appendTo($('#log'));
            break;
          default:
            break;

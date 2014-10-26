@@ -52,9 +52,9 @@ Table.prototype.getPlayer = function(idPlayer){
   }
 }
 
-Table.prototype.getStates = function(){
+Table.prototype.getStates = function(withLastAction){
   if(this._currentHand){
-    return this._currentHand.getStates();
+    return this._currentHand.getStates(withLastAction);
   }
 }
 

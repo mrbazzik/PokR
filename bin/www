@@ -15,13 +15,13 @@ var server = app.listen(config.get('port'), function() {
 });
 var users = [];
 var table;
-function sendStates(states){
+function sendStates(states, showDown){
 //  getUser('1').conn.write(states[0]);
 //var answer = null;
   for(var i=0; i<states.length; i++){
     var state = states[i];
     if(state.real){
-      sendMessage('STATE', state, state.id);
+      sendMessage(showDown ? 'SHOWDOWN' : 'STATE', state, state.id);
       //getUser(state.id).conn.write(JSON.stringify(state));
     }
     // else {
@@ -56,20 +56,26 @@ function getUser(id){
   }
 }
 
-function moveToNextUser(table){
-  var states = table.getStates();
+function moveToNextUser(table, newRound){
+  var states = table.getStates(newRound);
   log.debug(states);
   sendStates(states);
   var state = getChoicer(states);
   var tradeRound = true;
   while(!state.real && tradeRound){
     tradeRound = table.handleState(state);
-    sendStates(table.getStates());
+    states = table.getStates(true);
+    sendStates(states);
     if(!tradeRound){
       var stage = table.nextStage();
-      sendStates(table.getStates());
+      states = table.getStates();
+      sendStates(states);
       if(!stage){
-        sendMessage('SERVICE', 'END_HAND');
+        sendStates(table.getStates(), true);
+        //sendMessage('SERVICE', 'END_HAND');
+      } else {
+        sendMessage('STAGE', stage);
+        tradeRound = true;
       }
     }
     state = getChoicer(states);
@@ -96,10 +102,11 @@ sockServe.on('connection', function(conn) {
               table.startHand();
               var stage = table.nextStage();
               if(stage){
-                //sendMessage('STAGE', stage);
-                moveToNextUser(table);
+                sendMessage('STAGE', stage);
+                moveToNextUser(table, true);
               }else{
-                sendMessage('SERVICE', 'END_HAND');
+                sendStates(table.getStates(), true);
+                //sendMessage('SERVICE', 'END_HAND');
               }
               break;
             default:
@@ -109,16 +116,17 @@ sockServe.on('connection', function(conn) {
         case 'DECISION':
           var tradeRound = table.handleDecision(message.data);
           if(!tradeRound){
-            sendStates(table.getStates());
+            sendStates(table.getStates(true));
             var stage = table.nextStage();
             if(!stage){
-              sendMessage('SERVICE', 'END_HAND');
+              sendStates(table.getStates(), true);
+              //sendMessage('SERVICE', 'END_HAND');
               break;
             }
-            //sendMessage('STAGE', stage);
+            sendMessage('STAGE', stage);
           }
 
-          moveToNextUser(table);
+          moveToNextUser(table, tradeRound);
           break;
         default:
           sendMessage('SERVICE', 'END_HAND');

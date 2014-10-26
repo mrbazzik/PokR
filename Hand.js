@@ -18,7 +18,7 @@ function Hand(table){
   this._tradePlayer = null;
   //this._makeSeats();
   this._numRaises = 0;
-
+  this._infoWin = "";
   this._table.players.forEach(function(item){
     item.initForHand();
   });
@@ -85,10 +85,26 @@ Hand.prototype._makeSeats = function(){
     else {
       seat = this.SEATS.slice(i - indSB + correction)[0];
     }
-    if(seat == 'SB') player.makeBet(this._table.blinds[0]);
-    else if(seat == 'BB') player.makeBet(this._table.blinds[1]);
+    if(seat == 'SB') {
+      var sum = this._table.blinds[0];
+      player.makeBet(sum);
+      this._bank+=sum;
+    }
+    else if(seat == 'BB') {
+      sum = this._table.blinds[1];
+      player.makeBet(sum);
+      this._bank+=sum;
+    }
     player.seat = seat;
     player.currentChoice = this._getChoice(seat);
+  }
+};
+
+Hand.prototype._initChoices = function(){
+  for(var i=0, l=this._table.players.length; i<l; i++){
+    var player = this._table.players[i];
+    player.currentChoice = this._getChoice(player.seat);
+    player.lastAction = "";
   }
 };
 
@@ -136,7 +152,16 @@ Hand.prototype.deal = function(){
   //log.debug('board: '+ this._board);
 };
 
-Hand.prototype.getState = function(player, withChoice){
+Hand.prototype._getWinners = function(){
+  var players = this._table.players;
+  var i = Math.round(Math.random()*(players.length-1));
+  return players.slice(i).concat(players.slice(0,i-1));
+
+}
+
+
+
+Hand.prototype.getState = function(player, withChoice, withLastAction){
   if(!(player instanceof Player)) player = this._table.getPlayer(player);
   var state = {
     id: player.getId(),
@@ -144,11 +169,23 @@ Hand.prototype.getState = function(player, withChoice){
     hand: player.hand.toString(),
     board: this._board.toString(),
     seat: player.seat,
-    stack: player.getStack(),
+    stacks: [],
+    bank: this._bank,
+    choicer: this._tradePlayer.getId(),
+    winner: player.isWinner,
+    winSum: player.getWinSum(),
+    infoWin: this._infoWin
   };
-  if(this._actions.length > 0) state.lastAction = this._actions[this._actions.length-1].toString()
+  if(withLastAction && this._actions.length > 0) state.lastAction = this._actions[this._actions.length-1].toString()
   if(withChoice) state.choice = player.currentChoice;
 
+  for(var i=0, l=this._table.players.length; i<l; i++){
+    var player = this._table.players[i];
+     var obj={};
+     obj[player.getId()] = player.getStack();
+
+    state.stacks.push(obj);
+  }
   return state;
 };
 
@@ -174,6 +211,7 @@ Hand.prototype.nextStage = function(){
     indStage++;
     this._currentStage = this.STAGES[indStage];
     //this._makeSeats();
+    this._initChoices();
   }
   //this._makeSeats();
 
@@ -181,11 +219,28 @@ Hand.prototype.nextStage = function(){
     this.deal();
     this._tradePlayer = null;
     this._numRaises = 0;
+  //  this._bank = 0;
     return this._currentStage;
     //trade round
     // var player = this._getFirstPlayerForTrade();
     // return this.getState(player, true);
   } else {
+    var winners = this._getWinners();
+    var arrWin = [];
+    for(var i=0, l=winners.length; i<l; i++){
+      var winSum = winners[i].getWinSum();
+      if(this._bank < winSum){
+        winners[i].makeWin(this._bank, (i==0));
+        arrWin.push(winners[i].getId()+" won "+this._bank);
+        this._bank = 0;
+        break;
+      } else {
+        winners[i].makeWin(winSum, (i==0));
+        this._bank -= winSum;
+        arrWin.push(winners[i].getId()+" won "+winSum);
+      }
+    }
+    this._infoWin = arrWin.join('\n');
     log.debug('end of game');
     return false;
   }
@@ -201,7 +256,7 @@ Hand.prototype._nextPlayer = function(player){
   return this._table.players[player];
 }
 
-Hand.prototype.getStates = function(){
+Hand.prototype.getStates = function(withLastAction){
   if(!this._tradePlayer){
     this._tradePlayer = this._getFirstPlayerForTrade();
   } else {
@@ -209,10 +264,11 @@ Hand.prototype.getStates = function(){
   }
   var states = [];
   for(var i=0; i<this._table.players.length; i++){
-    if(this._table.players[i] == this._tradePlayer){
-      states.push(this.getState(this._table.players[i], true));
+    var player = this._table.players[i];
+    if(player == this._tradePlayer && player.currentChoice.answering){
+      states.push(this.getState(player, true, withLastAction));
     } else{
-      states.push(this.getState(this._table.players[i], false));
+      states.push(this.getState(player, false, withLastAction));
     }
 
   }
@@ -225,30 +281,25 @@ Hand.prototype.handleDecision = function(message){
 
     if(message.action == 'RAISE') this._numRaises++;
     action.player.makeBet(+message.sum);
+    this._bank+=(+message.sum);
 
     this._editChoices(action);
     return this._checkTrade();
 }
 
 Hand.prototype._checkTrade = function(){
-  var bank = 0;
-//  var tradeRound = null;
-  //var bankInput = null;
+
   for(var i=0; i<this._table.players.length; i++){
-    //var player = this._table.players[i];
-    // pTradeRound = player.getTradeRounds();
-    // pBankInput = player.getBankInput();
-    // if(tradeRound == null){
-    //   tradeRound = pTradeRound;
-    //   bankInput = pBankInput;
-    //} else
-      if(this._table.players[i].currentChoice.answering){
+    var player = this._table.players[i];
+      if(player.currentChoice.answering){
       return true;
-    } else {
-      bank+=this._table.players[i].getBankInput();
     }
   }
-  this._bank+=bank;
+  for(var i=0; i<this._table.players.length; i++){
+    var player = this._table.players[i];
+    player.calcWinSum(this._table.players);
+  }
+
   return false;
 }
 
