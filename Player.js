@@ -9,6 +9,9 @@ function Player(id, stack, real){
   this._putInBank = 0;
   this._winSum = 0;
   this.isWinner = false;
+  this._combination = null;
+  this._keyCards=[];
+  this._kickers=[];
   //this._tradeRounds = 0;
 }
 
@@ -31,6 +34,10 @@ Player.prototype.getStack = function(){
 Player.prototype.initForHand = function(){
   this._winSum = 0;
   this.isWinner = false;
+  this._combination = null;
+  this._keyCards=[];
+  this._kickers=[];
+
   //this._tradeRounds = 0;
 }
 

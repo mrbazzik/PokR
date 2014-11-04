@@ -152,12 +152,31 @@ Hand.prototype.deal = function(){
   //log.debug('board: '+ this._board);
 };
 
+/**
+ * edits players' info, setting combo, key cards, kickers and place
+ */
 Hand.prototype._getWinners = function(){
   var players = this._table.players;
-  var i = Math.round(Math.random()*(players.length-1));
-  return players.slice(i).concat(players.slice(0,i-1));
+  players.forEach(function(player){
+    this._checkCombination(player);
+  });
+  var winners = players.map(function(player){
+    return {
+       player: player,
+       place: (players.length-1)
+    };
+  });
+  winners.sort(function(a,b){
+
+  });
+  return winners;
+  //var i = Math.round(Math.random()*(players.length-1));
+  //return players.slice(i).concat(players.slice(0,i-1));
 
 }
+ Hand.prototype._checkCombination=function(player){
+
+ }
 
 
 
@@ -199,6 +218,12 @@ Hand.prototype._getFirstPlayerForTrade = function(){
   return player;
 };
 
+/**
+ * Handles all stages of hand, determing seats and dealing cards
+ * At the end it divides bank among players acordingly to their win place and amount of money they have contibuted in the bank
+ * (potential win sum of each player is calculated at the end of every trade round, considering the amount of money each player put in the bank)
+ * @return {[type]}
+ */
 Hand.prototype.nextStage = function(){
 
   if(!this._currentStage) {
@@ -227,18 +252,22 @@ Hand.prototype.nextStage = function(){
   } else {
     var winners = this._getWinners();
     var arrWin = [];
-    for(var i=0, l=winners.length; i<l; i++){
-      var winSum = winners[i].getWinSum();
-      if(this._bank < winSum){
-        winners[i].makeWin(this._bank, (i==0));
-        arrWin.push(winners[i].getId()+" won "+this._bank);
-        this._bank = 0;
-        break;
-      } else {
-        winners[i].makeWin(winSum, (i==0));
-        this._bank -= winSum;
-        arrWin.push(winners[i].getId()+" won "+winSum);
+    for(var i=0, l=winners.length; i<l && this._bank>0; i++){
+      var player = winners[i];
+      var winSum = player.getWinSum();
+      var divider = 1;
+      for(var k = i+1; k<l; k++){
+        if(winners[k].place == player.place){
+          divider++;
+        } else{
+          break;
+        }
       }
+      var bankPart = this._bank/divider;
+      var curSum = (bankPart <= winSum) ? bankPart : winSum;
+      player.makeWin(curSum, (i==0));
+      arrWin.push(player.getId()+" won "+curSum);
+      this._bank -= curSum;
     }
     this._infoWin = arrWin.join('\n');
     log.debug('end of game');
