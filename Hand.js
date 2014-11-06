@@ -1,5 +1,9 @@
 var log = require('libs/log')(module);
 var Player = require('Player');
+var Card = require('Card');
+var tables = require('tables');
+var COMBS = tables.get('combs');
+var COMBS_KEYS = Object.keys(COMBS);
 
 function Hand(table){
   //this._seats = this.SEATS.slice(-numPlayers);
@@ -163,18 +167,195 @@ Hand.prototype._getWinners = function(){
   var winners = players.map(function(player){
     return {
        player: player,
-       place: (players.length-1)
+       place: players.length
     };
   });
   winners.sort(function(a,b){
+    var aInfo = a.player.getComboInfo();
+    var bInfo = b.player.getComboInfo();
+    if(aInfo.combo.index > bInfo.combo.index){
+      a.place--;
+      return 1;
+    } else if(aInfo.combo.index < bInfo.combo.index){
+      b.place--;
+      return -1;
+    } else {
+      for(var i=0, l=aInfo.keyCards.length; i<l; i++){
+        var resCompare = Card.compare(aInfo.keyCards[i], bInfo.keyCards[i]);
+        if(resCompare == 1){
+          a.place--;
+          return 1;
+        } else if(resCompare == -1){
+          b.place--;
+          return -1;
+        }
+      }
+      for(var i=0, l=aInfo.kickers.length; i<l; i++){
+        var resCompare = Card.compare(aInfo.kickers[i], bInfo.kickers[i]);
+        if(resCompare == 1){
+          a.place--;
+          return 1;
+        } else if(resCompare == -1){
+          b.place--;
+          return -1;
+        }
+      }
 
+    }
   });
   return winners;
   //var i = Math.round(Math.random()*(players.length-1));
   //return players.slice(i).concat(players.slice(0,i-1));
 
 }
+
+
+/**
+ * Goes through all combinations and check them in player's hand
+ * Extract index of combo, key cards of combo and kickers for easier later comparison
+ * @param  {Player} player
+ * @return {[type]}
+ */
  Hand.prototype._checkCombination=function(player){
+
+  var cards = this._board.concat(player.hand);
+  var comboLength = 5;
+  Card.sort(cards, true);
+  var cardsVals = cards.map(function(item){
+    return item.val;
+  });
+
+  cardsVals = cardsVals.join('');
+  for(var i=0, l=COMBS_KEYS.length; i<l; i++){
+    var combo = COMBS[COMBS_KEYS[i]];
+    var keyCards = [];
+    var valsFound = true;
+    var cardsFound = [];
+    if(combo.vals === 'order'){
+      var numPossibilities = cards.length - comboLength;
+      valsFound = false;
+      for(var k=numPossibilities; k>=0; k--){
+        var prevCard = cards[k];
+        cardsFound.push(prevCard);
+        
+        for(var n=k+1; cardsFound.length<comboLength; n++){
+          var resCompare = cards[n].compare(prevCard);
+          if(resCompare >= 0){
+            prevCard = cards[n];
+            if(resCompare == 0){
+              cardsFound.pop());  
+            }
+            cardsFound.push(cards[n]);
+          } else {
+            cardsFound = [];
+            break;
+          }
+        }
+        if(cardsFound.length > 0){
+          keyCards.push(cards[n].val);
+          valsFound = true;
+          break;
+        }
+      }
+      //checking order from Ace
+      if(cardsFound.length == 0 && cards[0].val == '2' && cards[cards.length-1].val == 'A'){
+        var prevCard = cards[0];
+        for(var n=1; cardsFound.length<comboLength; n++){
+          var resCompare = cards[n].compare(prevCard);
+          if(resCompare >= 0){
+            prevCard = cards[n];
+            if(resCompare == 0){
+              cardsFound.pop());  
+            }
+            cardsFound.push(cards[n]);
+          } else {
+            cardsFound = [];
+            break;
+          }
+        }
+        if(cardsFound.length > 0){
+          keyCards.push(cards[n].val);
+          valsFound = true;
+          
+        }     
+      }
+
+    } else {  //an array
+      for(var k=0, v=combo.vals.length; k<v; k++){
+        var val = combo.vals[k];
+        var exp = new RegExp('(?=(.))\\1{'+val+'}', 'g');  //matches repeated values
+        var comboParts = cardsVals.match(exp);
+        if(comboParts === null) {
+          valsFound = false;
+          break;
+        } else {
+          var highPart = comboParts.pop();
+          var indHighPart = cardsVals.lastIndexOf(highPart);
+          cardsVals = cardsVals.replace(highPart,'');
+          keyCards.push(highPart[0]);
+          cardsFound.concat(cards.slice(indHighPart,indHighPart+val));
+          
+        }
+        
+      }
+
+      if(valsFound){
+        if(combo.suits){
+          if(cardsFound.length === 0){
+            Card.sort(cards, false);
+            var cardsSuits = cards.map(function(item){
+              return item.suit;
+            });
+
+            cardsSuits = cardsSuits.join('');
+            var exp = new RegExp('(?=(.))\\1{'+comboLength+'}', 'g');
+            var comboParts = cardsSuits.match(exp);
+            if(comboParts !== null){
+              var highPart = comboParts.pop();
+              var indHighPart = cardsSuits.lastIndexOf(highPart);
+              var comboInfo = {
+                name: COMBS_KEYS[i],
+                index: combo.index
+              };
+              keyCards.push(cards[indHighPart+comboLength-1].val);
+              player.setComboInfo(comboInfo, keyCards, []);
+              break;
+            }
+            Card.sort(cards, true);
+          } else {
+            var suit = null;
+            var sameSuit = true;
+            for(k=0, v=cardsFound.length; k<v; k++){
+              if(suit === null){
+                suit = cardsFound[i].suit;
+              } else if(suit !== cardsFound[i].suit){
+                 sameSuit = false;
+                 break; 
+              }
+            }
+            if(sameSuit){
+              var comboInfo = {
+                name: COMBS_KEYS[i],
+                index: combo.index
+              };
+              player.setComboInfo(comboInfo, keyCards, []);
+              break;
+            }
+            
+          }
+
+        } else {
+          var comboInfo = {
+            name: COMBS_KEYS[i],
+            index: combo.index
+          };
+          var kickers = cardsVals.splice(-1, comboLength - cardsFound.length);
+          player.setComboInfo(comboInfo, keyCards, kickers);
+          break;
+        }
+      }
+    }
+  }
 
  }
 
@@ -253,11 +434,11 @@ Hand.prototype.nextStage = function(){
     var winners = this._getWinners();
     var arrWin = [];
     for(var i=0, l=winners.length; i<l && this._bank>0; i++){
-      var player = winners[i];
-      var winSum = player.getWinSum();
+      var winner = winners[i];
+      var winSum = winner.player.getWinSum();
       var divider = 1;
       for(var k = i+1; k<l; k++){
-        if(winners[k].place == player.place){
+        if(winners[k].place == winner.place){
           divider++;
         } else{
           break;
@@ -265,8 +446,8 @@ Hand.prototype.nextStage = function(){
       }
       var bankPart = this._bank/divider;
       var curSum = (bankPart <= winSum) ? bankPart : winSum;
-      player.makeWin(curSum, (i==0));
-      arrWin.push(player.getId()+" won "+curSum);
+      winner.player.makeWin(curSum, (i==0));
+      arrWin.push(winner.player.getId()+" won "+curSum);
       this._bank -= curSum;
     }
     this._infoWin = arrWin.join('\n');

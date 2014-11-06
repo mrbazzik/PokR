@@ -27,6 +27,21 @@ Player.prototype.getStack = function(){
   return this._stack;
 }
 
+Player.prototype.setComboInfo = function(combo, keyCards, kickers){
+  this._combination = combo;
+  this._keyCards = keyCards;
+  this._kickers = kickers;
+}
+
+Player.prototype.getComboInfo = function(){
+  return {
+    combo: this._combination,
+    keyCards: this._keyCards,
+    kickers: this._kickers
+  };
+  
+}
+
 // Player.prototype.getTradeRounds = function(){
 //   return this._tradeRounds;
 // }
