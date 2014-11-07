@@ -182,21 +182,21 @@ Hand.prototype._getWinners = function(){
       return -1;
     } else {
       for(var i=0, l=aInfo.keyCards.length; i<l; i++){
-        var resCompare = Card.compare(aInfo.keyCards[i], bInfo.keyCards[i]);
-        if(resCompare == 1){
+        // var resCompare = Card.compare(aInfo.keyCards[i], bInfo.keyCards[i]);
+        if(aInfo.keyCards[i] > bInfo.keyCards[i]){
           a.place--;
           return 1;
-        } else if(resCompare == -1){
+        } else if(aInfo.keyCards[i] < bInfo.keyCards[i]){
           b.place--;
           return -1;
         }
       }
       for(var i=0, l=aInfo.kickers.length; i<l; i++){
-        var resCompare = Card.compare(aInfo.kickers[i], bInfo.kickers[i]);
-        if(resCompare == 1){
+        // var resCompare = Card.compare(aInfo.kickers[i], bInfo.kickers[i]);
+        if(aInfo.kickers[i] > bInfo.kickers[i]){
           a.place--;
           return 1;
-        } else if(resCompare == -1){
+        } else if(aInfo.kickers[i] < bInfo.kickers[i]){
           b.place--;
           return -1;
         }
@@ -222,11 +222,8 @@ Hand.prototype._getWinners = function(){
   var cards = this._board.concat(player.hand);
   var comboLength = 5;
   Card.sort(cards, true);
-  var cardsVals = cards.map(function(item){
-    return item.val;
-  });
+  cardsVals = Card.getValsString(cards);
 
-  cardsVals = cardsVals.join('');
   for(var i=0, l=COMBS_KEYS.length; i<l; i++){
     var combo = COMBS[COMBS_KEYS[i]];
     var keyCards = [];
@@ -240,13 +237,13 @@ Hand.prototype._getWinners = function(){
         cardsFound.push(prevCard);
         
         for(var n=k+1; cardsFound.length<comboLength; n++){
-          var resCompare = cards[n].compare(prevCard);
-          if(resCompare >= 0){
-            prevCard = cards[n];
-            if(resCompare == 0){
+         var res = cards[n].val - prevCard.val;
+          if(res == 0 || res == 1){
+            if(res == 0){
               cardsFound.pop();  
             }
             cardsFound.push(cards[n]);
+            prevCard = cards[n];
           } else {
             cardsFound = [];
             break;
@@ -259,16 +256,16 @@ Hand.prototype._getWinners = function(){
         }
       }
       //checking order from Ace
-      if(cardsFound.length == 0 && cards[0].val == '2' && cards[cards.length-1].val == 'A'){
+      if(cardsFound.length == 0 && cards[0].val == 0 && cards[cards.length-1].val == 12){
         var prevCard = cards[0];
         for(var n=1; cardsFound.length<comboLength; n++){
-          var resCompare = cards[n].compare(prevCard);
-          if(resCompare >= 0){
-            prevCard = cards[n];
-            if(resCompare == 0){
+          //var resCompare = cards[n].compare(prevCard);
+          if(cards[n].val >= prevCard.val){
+            if(cards[n].val == prevCard.val){
               cardsFound.pop();  
             }
             cardsFound.push(cards[n]);
+            prevCard = cards[n];
           } else {
             cardsFound = [];
             break;
@@ -293,7 +290,7 @@ Hand.prototype._getWinners = function(){
           var highPart = comboParts.pop();
           var indHighPart = cardsVals.lastIndexOf(highPart);
           cardsVals = cardsVals.replace(highPart,'');
-          keyCards.push(highPart[0]);
+          keyCards.push(cards[indHighPart].val);
           cardsFound.concat(cards.slice(indHighPart,indHighPart+val));
           
         }
@@ -304,11 +301,7 @@ Hand.prototype._getWinners = function(){
         if(combo.suits){
           if(cardsFound.length === 0){
             Card.sort(cards, false);
-            var cardsSuits = cards.map(function(item){
-              return item.suit;
-            });
-
-            cardsSuits = cardsSuits.join('');
+            var cardsSuits = Card.getSuitsString(cards);
             var exp = new RegExp('(?=(.))\\1{'+comboLength+'}', 'g');
             var comboParts = cardsSuits.match(exp);
             if(comboParts !== null){
@@ -350,7 +343,8 @@ Hand.prototype._getWinners = function(){
             name: COMBS_KEYS[i],
             index: combo.index
           };
-          var kickers = cardsVals.splice(-1, comboLength - cardsFound.length);
+          var kickers = cardsVals.slice(-(comboLength - cardsFound.length));
+          kickers = Card.getValsInds(kickers);
           player.setComboInfo(comboInfo, keyCards, kickers);
           break;
         }

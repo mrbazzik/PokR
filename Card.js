@@ -14,52 +14,68 @@ Card.prototype.isEqual = function(card){
   return (this.val == card.val && this.suit == card.suit);
 }
 
-Card.prototype.getValsString = function(cards){
+Card.getValsString = function(cards){
 	var arr = cards.map(function(card){
 		return Card.prototype.VALS[card.val];
 	});
-}
-
-
-Card.prototype.compare = function(card){
-	if(this.val > card.val) {
-		return 1;
-	} else if (this.val == card.val){
-		return 0;
-	} else {
-		return -1;
-	}
-  
-}
-
-Card.compareVals = function(a, b){
-	var aVal = Card.prototype.VALS.indexOf(a);
-	var bVal = Card.prototype.VALS.indexOf(b);
-	if(aVal > bVal){
-		return 1;
-	} else if(aVal == bVal){
-		return 0;
-	} else {
-		return -1;
-	}
+	return arr.join('');
 };
+
+Card.getSuitsString = function(cards){
+	var arr = cards.map(function(card){
+		return Card.prototype.SUITS[card.suit];
+	});
+	return arr.join('');
+};
+
+Card.getValsInds = function(vals){
+	var arr = [];
+	for(var i=0, l=vals.length; i<l; i++){
+		arr.push(Card.prototype.VALS.indexOf(vals[i]));
+	}
+	return arr;
+};
+
+
+// Card.prototype.compare = function(card){
+// 	if(this.val > card.val) {
+// 		return 1;
+// 	} else if (this.val == card.val){
+// 		return 0;
+// 	} else {
+// 		return -1;
+// 	}
+  
+// }
+
+// Card.compareVals = function(a, b){
+// 	var aVal = Card.prototype.VALS.indexOf(a);
+// 	var bVal = Card.prototype.VALS.indexOf(b);
+// 	if(aVal > bVal){
+// 		return 1;
+// 	} else if(aVal == bVal){
+// 		return 0;
+// 	} else {
+// 		return -1;
+// 	}
+// };
 
 Card.sort = function(cards, byVal){
 	var byVal = byVal || true;
 	if(byVal){
 		var sortFunc = function(a, b){
-			var aVal = Card.prototype.VALS.indexOf(a.val);
-			var bVal = Card.prototype.VALS.indexOf(b.val);
-			if( aVal > bVal) return 1;
+			// var aVal = Card.prototype.VALS.indexOf(a.val);
+			// var bVal = Card.prototype.VALS.indexOf(b.val);
+			if( a.val > b.val) return 1;
 			else return -1;
 		};
 	} else {
 		sortFunc = function(a, b){
-			var aVal = Card.prototype.VALS.indexOf(a.val);
-			var bVal = Card.prototype.VALS.indexOf(b.val);
+			// var aVal = Card.prototype.VALS.indexOf(a.val);
+			// var bVal = Card.prototype.VALS.indexOf(b.val);
 			var aSuit = Card.prototype.SUITS.indexOf(a.suit);
 			var bSuit = Card.prototype.SUITS.indexOf(b.suit);
-			if(aSuit > bSuit || (aSuit === bSuit && aVal > bVal)) return 1;
+			if(aSuit > bSuit || (aSuit === bSuit && a.val > b.val)) return 1;
 			else return -1;
 		};
 	}
