@@ -1,47 +1,49 @@
 {
-	"StraightFlush": {
-		"vals": "order",
-		"suits": true,
-		"index": 0
-	},
-	"Four": {
-		"vals": [4],
-		"suits": false,
-		"index": 1
-	},
-	"Full": {
-		"vals": [3, 2],
-		"suits": false,
-		"index": 2
-	},
-	"Flush": {
-		"vals": [],
-		"suits": true,
-		"index": 3
-	},
-	"Straight": {
-		"vals": "order",
-		"suits": false,
-		"index": 4
-	},
-	"Three": {
-		"vals": [3],
-		"suits": false,
-		"index": 5
-	},
-	"TwoPairs": {
-		"vals": [2,2],
-		"suits": false,
-		"index": 6
-	},
-	"Pair": {
-		"vals": [2],
-		"suits": false,
-		"index": 7
-	},
-	"HighCard": {
-		"vals": [1],
-		"suits": false,
-		"index": 8
+	"combos": {
+		"StraightFlush": {
+			"vals": "order",
+			"suits": true,
+			"index": 0
+		},
+		"Four": {
+			"vals": [4],
+			"suits": false,
+			"index": 1
+		},
+		"Full": {
+			"vals": [3, 2],
+			"suits": false,
+			"index": 2
+		},
+		"Flush": {
+			"vals": [],
+			"suits": true,
+			"index": 3
+		},
+		"Straight": {
+			"vals": "order",
+			"suits": false,
+			"index": 4
+		},
+		"Three": {
+			"vals": [3],
+			"suits": false,
+			"index": 5
+		},
+		"TwoPairs": {
+			"vals": [2,2],
+			"suits": false,
+			"index": 6
+		},
+		"Pair": {
+			"vals": [2],
+			"suits": false,
+			"index": 7
+		},
+		"HighCard": {
+			"vals": [1],
+			"suits": false,
+			"index": 8
+		}
 	}
 }

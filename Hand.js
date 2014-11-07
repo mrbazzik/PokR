@@ -2,7 +2,7 @@ var log = require('libs/log')(module);
 var Player = require('Player');
 var Card = require('Card');
 var tables = require('tables');
-var COMBS = tables.get('combs');
+var COMBS = tables.get('combos');
 var COMBS_KEYS = Object.keys(COMBS);
 
 function Hand(table){
@@ -161,8 +161,9 @@ Hand.prototype.deal = function(){
  */
 Hand.prototype._getWinners = function(){
   var players = this._table.players;
+  var self = this;
   players.forEach(function(player){
-    this._checkCombination(player);
+    self._checkCombination(player);
   });
   var winners = players.map(function(player){
     return {
@@ -243,7 +244,7 @@ Hand.prototype._getWinners = function(){
           if(resCompare >= 0){
             prevCard = cards[n];
             if(resCompare == 0){
-              cardsFound.pop());  
+              cardsFound.pop();  
             }
             cardsFound.push(cards[n]);
           } else {
@@ -265,7 +266,7 @@ Hand.prototype._getWinners = function(){
           if(resCompare >= 0){
             prevCard = cards[n];
             if(resCompare == 0){
-              cardsFound.pop());  
+              cardsFound.pop();  
             }
             cardsFound.push(cards[n]);
           } else {

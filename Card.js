@@ -14,6 +14,13 @@ Card.prototype.isEqual = function(card){
   return (this.val == card.val && this.suit == card.suit);
 }
 
+Card.prototype.getValsString = function(cards){
+	var arr = cards.map(function(card){
+		return Card.prototype.VALS[card.val];
+	});
+}
+
+
 Card.prototype.compare = function(card){
 	if(this.val > card.val) {
 		return 1;
@@ -22,7 +29,7 @@ Card.prototype.compare = function(card){
 	} else {
 		return -1;
 	}
-  return (this.val == card.val && this.suit == card.suit);
+  
 }
 
 Card.compareVals = function(a, b){
