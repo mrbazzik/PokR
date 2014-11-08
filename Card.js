@@ -61,21 +61,21 @@ Card.getValsInds = function(vals){
 // };
 
 Card.sort = function(cards, byVal){
-	var byVal = byVal || true;
+	
 	if(byVal){
 		var sortFunc = function(a, b){
 			// var aVal = Card.prototype.VALS.indexOf(a.val);
 			// var bVal = Card.prototype.VALS.indexOf(b.val);
-			if( a.val > b.val) return 1;
+			if( a.val > b.val || (a.val === b.val && a.suit > b.suit)) return 1;
 			else return -1;
 		};
 	} else {
 		sortFunc = function(a, b){
 			// var aVal = Card.prototype.VALS.indexOf(a.val);
 			// var bVal = Card.prototype.VALS.indexOf(b.val);
-			var aSuit = Card.prototype.SUITS.indexOf(a.suit);
-			var bSuit = Card.prototype.SUITS.indexOf(b.suit);
-			if(aSuit > bSuit || (aSuit === bSuit && a.val > b.val)) return 1;
+			//var aSuit = Card.prototype.SUITS.indexOf(a.suit);
+			//var bSuit = Card.prototype.SUITS.indexOf(b.suit);
+			if(a.suit > b.suit || (a.suit === b.suit && a.val > b.val)) return 1;
 			else return -1;
 		};
 	}

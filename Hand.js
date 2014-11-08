@@ -4,6 +4,7 @@ var Card = require('Card');
 var tables = require('tables');
 var COMBS = tables.get('combos');
 var COMBS_KEYS = Object.keys(COMBS);
+var Tests = require('Tests');
 
 function Hand(table){
   //this._seats = this.SEATS.slice(-numPlayers);
@@ -162,6 +163,8 @@ Hand.prototype.deal = function(){
 Hand.prototype._getWinners = function(){
   var players = this._table.players;
   var self = this;
+  Tests.checkComboTest(this, players[0]);
+  return;
   players.forEach(function(player){
     self._checkCombination(player);
   });
@@ -222,13 +225,14 @@ Hand.prototype._getWinners = function(){
   var cards = this._board.concat(player.hand);
   var comboLength = 5;
   Card.sort(cards, true);
-  cardsVals = Card.getValsString(cards);
+  var initCardsVals = Card.getValsString(cards);
 
   for(var i=0, l=COMBS_KEYS.length; i<l; i++){
     var combo = COMBS[COMBS_KEYS[i]];
     var keyCards = [];
     var valsFound = true;
     var cardsFound = [];
+    var cardsVals = initCardsVals;
     if(combo.vals === 'order'){
       var numPossibilities = cards.length - comboLength;
       valsFound = false;
@@ -236,7 +240,7 @@ Hand.prototype._getWinners = function(){
         var prevCard = cards[k];
         cardsFound.push(prevCard);
         
-        for(var n=k+1; cardsFound.length<comboLength; n++){
+        for(var n=k+1; n<cards.length; n++){
          var res = cards[n].val - prevCard.val;
           if(res == 0 || res == 1){
             if(res == 0){
@@ -249,19 +253,22 @@ Hand.prototype._getWinners = function(){
             break;
           }
         }
-        if(cardsFound.length > 0){
-          keyCards.push(cards[n].val);
+        if(cardsFound.length >= comboLength){
+          cardsFound = cardsFound.splice(-comboLength);
+          keyCards.push(prevCard.val);
           valsFound = true;
           break;
+        } else {
+          cardsFound=[];
         }
       }
       //checking order from Ace
       if(cardsFound.length == 0 && cards[0].val == 0 && cards[cards.length-1].val == 12){
         var prevCard = cards[0];
-        for(var n=1; cardsFound.length<comboLength; n++){
-          //var resCompare = cards[n].compare(prevCard);
-          if(cards[n].val >= prevCard.val){
-            if(cards[n].val == prevCard.val){
+        for(var n=1; n<cards.length; n++){
+         var res = cards[n].val - prevCard.val;
+          if(res == 0 || res == 1){
+            if(res == 0){
               cardsFound.pop();  
             }
             cardsFound.push(cards[n]);
@@ -271,11 +278,13 @@ Hand.prototype._getWinners = function(){
             break;
           }
         }
-        if(cardsFound.length > 0){
-          keyCards.push(cards[n].val);
+        if(cardsFound.length >= comboLength-1){
+          cardsFound = cardsFound.splice(-(comboLength-1));
+          keyCards.push(prevCard.val);
           valsFound = true;
-          
-        }     
+        } else {
+          cardsFound=[];
+        }
       }
 
     } else {  //an array
@@ -296,6 +305,7 @@ Hand.prototype._getWinners = function(){
         }
         
       }
+    }
 
       if(valsFound){
         if(combo.suits){
@@ -321,8 +331,8 @@ Hand.prototype._getWinners = function(){
             var sameSuit = true;
             for(k=0, v=cardsFound.length; k<v; k++){
               if(suit === null){
-                suit = cardsFound[i].suit;
-              } else if(suit !== cardsFound[i].suit){
+                suit = cardsFound[k].suit;
+              } else if(suit !== cardsFound[k].suit){
                  sameSuit = false;
                  break; 
               }
@@ -349,7 +359,7 @@ Hand.prototype._getWinners = function(){
           break;
         }
       }
-    }
+    
   }
 
  }
