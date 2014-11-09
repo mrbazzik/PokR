@@ -110,6 +110,7 @@ Hand.prototype._initChoices = function(){
     var player = this._table.players[i];
     player.currentChoice = this._getChoice(player.seat);
     player.lastAction = "";
+    player.setBankInput(0);
   }
 };
 
@@ -163,8 +164,8 @@ Hand.prototype.deal = function(){
 Hand.prototype._getWinners = function(){
   var players = this._table.players;
   var self = this;
-  Tests.checkComboTest(this, players[0]);
-  return;
+  // Tests.checkComboTest(this, players[0]);
+  // return;
   players.forEach(function(player){
     self._checkCombination(player);
   });
@@ -177,31 +178,31 @@ Hand.prototype._getWinners = function(){
   winners.sort(function(a,b){
     var aInfo = a.player.getComboInfo();
     var bInfo = b.player.getComboInfo();
-    if(aInfo.combo.index > bInfo.combo.index){
+    if(aInfo.combo.index < bInfo.combo.index){
       a.place--;
-      return 1;
-    } else if(aInfo.combo.index < bInfo.combo.index){
-      b.place--;
       return -1;
+    } else if(aInfo.combo.index > bInfo.combo.index){
+      b.place--;
+      return 1;
     } else {
       for(var i=0, l=aInfo.keyCards.length; i<l; i++){
         // var resCompare = Card.compare(aInfo.keyCards[i], bInfo.keyCards[i]);
         if(aInfo.keyCards[i] > bInfo.keyCards[i]){
           a.place--;
-          return 1;
+          return -1;
         } else if(aInfo.keyCards[i] < bInfo.keyCards[i]){
           b.place--;
-          return -1;
+          return 1;
         }
       }
       for(var i=0, l=aInfo.kickers.length; i<l; i++){
         // var resCompare = Card.compare(aInfo.kickers[i], bInfo.kickers[i]);
         if(aInfo.kickers[i] > bInfo.kickers[i]){
           a.place--;
-          return 1;
+          return -1;
         } else if(aInfo.kickers[i] < bInfo.kickers[i]){
           b.place--;
-          return -1;
+          return 1;
         }
       }
 

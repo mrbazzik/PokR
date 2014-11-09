@@ -23,6 +23,10 @@ Player.prototype.getBankInput = function(){
   return this._putInBank;
 }
 
+Player.prototype.setBankInput = function(sum){
+  this._putInBank = sum;
+}
+
 Player.prototype.getStack = function(){
   return this._stack;
 }
@@ -66,7 +70,7 @@ Player.prototype.calcWinSum = function(players){
       sum+=this._putInBank;
     }
   }
-  this._putInBank = 0;
+  //this._putInBank = 0;
   this._winSum+=sum;
 }
 
