@@ -25,6 +25,7 @@ Table.prototype._createPlayers = function(users, stack){
 }
 
 Table.prototype.getId = function(){
+  
   return this._id;
 }
 Table.prototype.getDealer = function(){
@@ -85,7 +86,7 @@ Table.prototype.handleState = function(message){
     }
 
     var answer = {
-      'id': 'computer1',
+      'id': message.id,
        'action': act ,
        'sum': sum
     };

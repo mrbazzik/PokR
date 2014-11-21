@@ -58,22 +58,30 @@ function getUser(id){
 
 function moveToNextUser(table, newRound){
   var states = table.getStates(newRound);
-  log.debug(states);
+  log.debug("---Real--------");
+  log.debug(JSON.stringify(states,null,'\t'));
   sendStates(states);
   var state = getChoicer(states);
   var tradeRound = true;
   while(!state.real && tradeRound){
     tradeRound = table.handleState(state);
     states = table.getStates(true);
+    log.debug("---UnReal--------");
+    log.debug(JSON.stringify(states,null,'\t'));
     sendStates(states);
     if(!tradeRound){
       var stage = table.nextStage();
       states = table.getStates();
+      log.debug("---UnReal--------");
+      log.debug(JSON.stringify(states,null,'\t'));
       sendStates(states);
       if(!stage){
+        log.debug("---UnReal--------");
+        log.debug(JSON.stringify(states,null,'\t'));
         sendStates(table.getStates(), true);
         //sendMessage('SERVICE', 'END_HAND');
       } else {
+        log.debug("=========================="+stage+"=============================");
         sendMessage('STAGE', stage);
         tradeRound = true;
       }

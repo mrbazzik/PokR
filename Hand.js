@@ -80,15 +80,17 @@ Hand.prototype._makeSeats = function(){
     indSB = Math.round(Math.random()*(this._table.players.length-1));
   }
 
-  if(indSB == this._table.players.length-1) var correction = this._table.players.length;
-  else correction = 0;
+  // if(indSB == this._table.players.length-1) var correction = this._table.players.length;
+  // else correction = 0;
   for(var i=0; i<this._table.players.length; i++){
     var player = this._table.players[i];
     if(i == indSB) {
       var seat = 'SB';
       }
-    else {
-      seat = this.SEATS.slice(i - indSB + correction)[0];
+    else if (indSB == this._table.players.length-1 && i == 0){
+      seat = 'BB';
+    } else {
+      seat = this.SEATS.slice(i - indSB)[0];
     }
     if(seat == 'SB') {
       var sum = this._table.blinds[0];
