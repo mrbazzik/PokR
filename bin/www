@@ -74,14 +74,15 @@ function moveToNextUser(table, newRound){
       states = table.getStates();
       log.debug("---UnReal--------");
       log.debug(JSON.stringify(states,null,'\t'));
-      sendStates(states);
+      //sendStates(states);
       if(!stage){
         log.debug("---UnReal--------");
         log.debug(JSON.stringify(states,null,'\t'));
-        sendStates(table.getStates(), true);
+        sendStates(states, true);
         //sendMessage('SERVICE', 'END_HAND');
       } else {
         log.debug("=========================="+stage+"=============================");
+        sendStates(states);
         sendMessage('STAGE', stage);
         tradeRound = true;
       }
@@ -100,7 +101,7 @@ var sockServe = sockjs.createServer();
 sockServe.on('connection', function(conn) {
   log.debug('starting game...');
   users.push({'id': '1', 'conn': conn});
-  table = new Table(2, users, [10, 20], 1000);
+  table = new Table(3, users, [10, 20], 1000);
   conn.on('data', function(message) {
       message = JSON.parse(message);
       switch(message.type){

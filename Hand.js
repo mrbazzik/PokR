@@ -76,7 +76,7 @@ Hand.prototype._getChoice = function(seat){
 
 Hand.prototype._makeSeats = function(){
   var indSB = this._getNextSB();
-  if(!indSB){
+  if(isNaN(+indSB)){
     indSB = Math.round(Math.random()*(this._table.players.length-1));
   }
 
