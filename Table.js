@@ -61,8 +61,8 @@ Table.prototype.getStates = function(withLastAction){
 
 Table.prototype.startHand = function(){
 
+  this._dealer.shuffle();
   this._currentHand = new Hand(this);
-
 }
 
 Table.prototype.handleDecision = function(message){
