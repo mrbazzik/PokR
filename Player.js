@@ -1,6 +1,7 @@
-function Player(id, stack, real){
+function Player(id, stack, real, tablePlace){
   this._id = real ? id : "computer"+id;
   //this._user = {};
+  this.tablePlace = tablePlace;
   this.real = real;
   this._stack = stack;
   this.hand = [];
@@ -60,10 +61,18 @@ Player.prototype.initForHand = function(){
   //this._tradeRounds = 0;
 }
 
-Player.prototype.calcWinSum = function(players){
+Player.prototype.calcWinSum = function(players, watchers){
   var sum = 0;
-  for(var i=0, l=players.length; i<l; i++){
-    var pBankInput = players[i].getBankInput();
+  var arr = [];
+  for(var i=0, l=watchers.length; i<l; i++){
+    var watcher = watchers[i];  
+    if(watcher.type == 'WAITING' || watcher.type == 'OUT'){
+      arr.push(watcher.player);
+    }
+  }
+  var corPlayers = players.concat(arr);
+  for(var i=0, l=corPlayers.length; i<l; i++){
+    var pBankInput = corPlayers[i].getBankInput();
     if(pBankInput < this._putInBank){ //if exited in the middle of trade for example
       sum+=pBankInput;
     }else {

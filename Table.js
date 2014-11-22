@@ -4,6 +4,7 @@ var Player = require('Player');
 
 function Table(numPlayers, users, blinds, startStack){
   this.players = new Array(numPlayers);
+  this.watchers = [];
   this._dealer = new Dealer();
   this._id = new Date().getTime();
   this._currentHand = null;
@@ -15,11 +16,11 @@ function Table(numPlayers, users, blinds, startStack){
 Table.prototype._createPlayers = function(users, stack){
   for(var i=0; i<this.players.length; i++){
     if(i<users.length){
-    this.players[i] = new Player(users[i].id, stack, true);
+    this.players[i] = new Player(users[i].id, stack, true, i);
 
     }else{
 
-    this.players[i] = new Player(i, stack, false);
+    this.players[i] = new Player(i, stack, false, i);
     }
   }
 }
@@ -73,16 +74,16 @@ Table.prototype.handleDecision = function(message){
 }
 Table.prototype.handleState = function(message){
   if(this._currentHand && message.choice){
-    if(message.choice.actions.indexOf('CALL')+1) {
-      var act = 'CALL';
-      var sum = message.choice.sum;
+    if(message.choice.actions.indexOf('CHECK')+1) {
+      var act = 'CHECK';
+      var sum = 0;
     }
-    else if (message.choice.actions.indexOf('RAISE')+1){
-      act = 'RAISE';
-      sum = 100;
-    } else {
-      act = 'CHECK';
+    else if (message.choice.actions.indexOf('FOLD')+1){
+      act = 'FOLD';
       sum = 0;
+    } else {
+      act = 'CALL';
+      sum = message.choice.sum;
     }
 
     var answer = {
