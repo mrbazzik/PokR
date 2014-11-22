@@ -1,9 +1,12 @@
 var log = require('libs/log')(module);
 var Player = require('Player');
+var Watcher = require('Watcher');
 var Card = require('Card');
+var Action = require('Action');
 var tables = require('tables');
 var COMBS = tables.get('combos');
 var COMBS_KEYS = Object.keys(COMBS);
+var PUSHES = tables.get('pushes');
 var Tests = require('Tests');
 
 function Hand(table){
@@ -24,26 +27,10 @@ function Hand(table){
   //this._makeSeats();
   this._numRaises = 0;
   this._infoWin = "";
-  this._table.players.forEach(function(item){
-    item.initForHand();
-  });
+  this._preparePlayers();
 
 }
 
-function Action(player, type, sum, stage){
-  this.type = type;
-  this.player = player;
-  this.sumForBank = sum;
-  this.stage = stage;
-
-
-}
-
-Action.prototype.toString = function(){
-  var str = "Player "+this.player.getId()+" makes "+this.type;
-  if(this.type != 'CHECK') str+= " for "+this.sumForBank;
-  return str;
-}
 
 function Choice(actions, sum, answering){
     this.actions = actions;
@@ -51,12 +38,35 @@ function Choice(actions, sum, answering){
     this.answering = answering;
 }
 
+
 Hand.prototype.SEATS = ['SB', 'BB', 'UTG1', 'UTG2', 'UTG3', 'MP1', 'MP2', 'MP3', 'CO', 'BU'];
 
 //TODO: make constants?
 Hand.prototype.STAGES = ['PREFLOP', 'FLOP', 'TURN', 'RIVER', 'SHOWDOWN'];
 Hand.prototype.ACTIONS = ['SMALL_BLIND', 'BIG_BLIND', 'CHECK', 'BET', 'FOLD', 'CALL', 'RAISE'];
 Hand.prototype.MAX_NUM_RAISES = 3;
+
+Hand.prototype._preparePlayers = function(){
+  var watchers = this._table.watchers;
+  var players = this._table.players;
+  for(var i=0; i<watchers.length;i++){
+    var watcher = watchers[i];
+    if(watcher.type == 'WAITING'){
+      var place = watcher.player.tablePlace;
+      if(place >= players.length){
+        players.push(watcher.player);
+      } else {
+
+        players.splice(place, 0, watcher.player);
+      }
+      watchers.splice(watchers.indexOf(watcher), 1);
+      i--;
+    }
+  }
+  players.forEach(function(player){
+    player.initForHand();
+  });
+};
 
 Hand.prototype._getChoice = function(seat){
   if(this._currentStage == 'PREFLOP'){
@@ -108,12 +118,22 @@ Hand.prototype._makeSeats = function(){
 };
 
 Hand.prototype._initChoices = function(){
-  for(var i=0, l=this._table.players.length; i<l; i++){
-    var player = this._table.players[i];
+  var players = this._table.players;
+  for(var i=0, l=players.length; i<l; i++){
+    var player = players[i];
     player.currentChoice = this._getChoice(player.seat);
     player.lastAction = "";
     player.setBankInput(0);
   }
+  var watchers = this._table.watchers;
+  for(var i=0, l=watchers.length; i<l; i++){
+    var watcher=watchers[i];
+    if(watcher.type == "WAITING" || watcher.type == "OUT"){
+      watcher.player.setBankInput(0);
+      
+    }
+  }
+
 };
 
 Hand.prototype._findSeat = function(seat){
@@ -174,42 +194,65 @@ Hand.prototype._getWinners = function(){
   var winners = players.map(function(player){
     return {
        player: player,
-       place: players.length
+       share: false
+       // place: 0,
+       // placeG: 0,
+       // placeL: 0,
+       // placeE: 0
     };
   });
   winners.sort(function(a,b){
     var aInfo = a.player.getComboInfo();
     var bInfo = b.player.getComboInfo();
     if(aInfo.combo.index < bInfo.combo.index){
-      a.place--;
+      // a.placeG++;
+      // b.placeL++;
       return -1;
     } else if(aInfo.combo.index > bInfo.combo.index){
-      b.place--;
+      // b.placeG++;
+      // a.placeL++;
       return 1;
     } else {
       for(var i=0, l=aInfo.keyCards.length; i<l; i++){
         // var resCompare = Card.compare(aInfo.keyCards[i], bInfo.keyCards[i]);
         if(aInfo.keyCards[i] > bInfo.keyCards[i]){
-          a.place--;
+          // a.placeG++;
+          // b.placeL++;
           return -1;
         } else if(aInfo.keyCards[i] < bInfo.keyCards[i]){
-          b.place--;
+          // b.placeG++;
+          // a.placeL++;
           return 1;
         }
       }
       for(var i=0, l=aInfo.kickers.length; i<l; i++){
         // var resCompare = Card.compare(aInfo.kickers[i], bInfo.kickers[i]);
         if(aInfo.kickers[i] > bInfo.kickers[i]){
-          a.place--;
+          // a.placeG++;
+          // b.placeL++;
           return -1;
         } else if(aInfo.kickers[i] < bInfo.kickers[i]){
-          b.place--;
+          // b.placeG++;
+          // a.placeL++;
           return 1;
         }
       }
 
     }
+    a.share = true;
+    b.share = true;
   });
+  // prevPlace = null;
+  // for(var i=0,l=winners.length;i<l;i++){
+  //   var winner = winners[i];
+  //   if(winner.placeE > 0 && prevPlace != null){
+  //     winner.place = prevPlace;
+  //   } else {
+  //     winner.place = winner.placeG-winner.placeL;
+  //     prevPlace = winner.place;
+  //   }
+  // }
+
   return winners;
   //var i = Math.round(Math.random()*(players.length-1));
   //return players.slice(i).concat(players.slice(0,i-1));
@@ -374,12 +417,17 @@ Hand.prototype.getState = function(player, withChoice, withLastAction){
 
 Hand.prototype._getFirstPlayerForTrade = function(){
   if(this._currentStage == this.STAGES[0]){
-    var indPlayer = this._findSeat('BB');
-    var player = this._nextPlayer(indPlayer);
+    var indSeat = 2;
   }else{
-    player = this._table.players[this._findSeat('SB')];
+    indSeat = 0;
   }
-  return player;
+   var indPlayer = this._findSeat(this.SEATS[indSeat]);
+   while(indPlayer == null){
+    if(indSeat == this.SEATS.length-1) indSeat = 0;
+    else indSeat++;
+    indPlayer = this._findSeat(this.SEATS[indSeat]);
+   }
+  return this._table.players[indPlayer];
 };
 
 /**
@@ -415,25 +463,28 @@ Hand.prototype.nextStage = function(){
     // return this.getState(player, true);
   } else {
     var winners = this._getWinners();
+    log.debug(JSON.stringify(winners,null,'\t'));
     var arrWin = [];
     for(var i=0, l=winners.length; i<l && this._bank>0; i++){
       var winner = winners[i];
       var winSum = winner.player.getWinSum();
       var divider = 1;
-      for(var k = i+1; k<l; k++){
-        if(winners[k].place == winner.place){
-          divider++;
-        } else{
-          break;
+      if(winner.share){
+        for(var k = i+1; k<l; k++){
+          if(winners[k].share){
+            divider++;
+          } else{
+            break;
+          }
         }
       }
       var bankPart = this._bank/divider;
       var curSum = (bankPart <= winSum) ? bankPart : winSum;
-      winner.player.makeWin(curSum, (i==0));
-      arrWin.push(winner.player.getId()+" won "+curSum);
+      winner.player.makeWin(curSum, (i==0 && divider == 1));
+      arrWin.push(winner.player.getId()+" won "+curSum+" with "+winner.player.hand.toString());
       this._bank -= curSum;
     }
-    this._infoWin = arrWin.join('\n');
+    this._infoWin = arrWin.join("\n");
     log.debug('end of game');
     return false;
   }
@@ -452,9 +503,7 @@ Hand.prototype._nextPlayer = function(player){
 Hand.prototype.getStates = function(withLastAction){
   if(!this._tradePlayer){
     this._tradePlayer = this._getFirstPlayerForTrade();
-  } else {
-    this._tradePlayer = this._nextPlayer(this._tradePlayer);
-  }
+  } 
   var states = [];
   for(var i=0; i<this._table.players.length; i++){
     var player = this._table.players[i];
@@ -465,34 +514,57 @@ Hand.prototype.getStates = function(withLastAction){
     }
 
   }
+  var watchers = this._table.watchers;
+  for(var i=0; i<watchers.length; i++){
+    var watcher = watchers[i];
+    if(watcher.type == 'WAITING' || watcher.type == 'OUT') {
+      states.push(this.getState(watcher.player, false, withLastAction));
+      
+    }
+    
+  }
   return states;
 }
 
 Hand.prototype.handleDecision = function(message){
-    var action = new Action(this._table.getPlayer(message.id), message.action, +message.sum, this._currentStage);
+    var player = this._table.getPlayer(message.id);
+    var action = new Action(player, message.action, +message.sum, this._currentStage);
     this._actions.push(action);
+    this._tradePlayer = this._nextPlayer(this._tradePlayer);
 
     if(message.action == 'RAISE') this._numRaises++;
+    else if (message.action == 'FOLD'){
+      var players = this._table.players;
+      var indPlayer = players.indexOf(player); 
+      players.splice(indPlayer, 1);
+      var watcher = new Watcher('WAITING', player);
+      this._table.watchers.push(watcher);
+    }
     action.player.makeBet(+message.sum);
     this._bank+=(+message.sum);
 
     this._editChoices(action);
+  
     return this._checkTrade();
 }
 
 Hand.prototype._checkTrade = function(){
-
-  for(var i=0; i<this._table.players.length; i++){
-    var player = this._table.players[i];
+  var players = this._table.players;
+  var watchers = this._table.watchers;
+  for(var i=0; i<players.length; i++){
+    var player = players[i];
       if(player.currentChoice.answering){
       return true;
     }
   }
-  for(var i=0; i<this._table.players.length; i++){
-    var player = this._table.players[i];
-    player.calcWinSum(this._table.players);
+  for(var i=0; i<players.length; i++){
+    var player = players[i];
+    player.calcWinSum(players, watchers);
   }
 
+  if(players.length == 1){
+    this._currentStage = 'RIVER';
+  }
   return false;
 }
 
@@ -504,7 +576,7 @@ Hand.prototype._editChoices = function(action){
         var actions = this.ACTIONS.slice(2, 5);
         //if(useRaise) actions.push('RAISE');
         player.currentChoice = new Choice(actions, 0, false);
-      }else if(action.type == 'RAISE' || action.type == 'BET'){
+      }else if(action.player.getBankInput() > player.getBankInput() && player.getStack() > 0){//(action.type == 'RAISE' || action.type == 'BET'){
         actions = ['FOLD', 'CALL'];
         if(useRaise) actions.push('RAISE');
         player.currentChoice = new Choice(actions, action.player.getBankInput() - player.getBankInput(), true);

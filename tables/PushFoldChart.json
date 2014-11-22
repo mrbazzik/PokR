@@ -1,0 +1,134 @@
+//First key - opponent presence
+//Second key - place
+//0 - early position
+//1 - middle
+//2 - CO, BU
+//3 - blinds
+//cards are summarized among prev positions
+//(if key<= cur position then use this key cards except cur excards)
+{
+	
+	"Pushes":	{
+		"NoOp":{
+			"0": {
+				"12": {
+
+				},
+				"10": {
+					"cards": ["AK", "AQ", 
+							  "AKs", "AQs", "AJs", "ATs", 
+							  "66", "77", "88", "99","TT","JJ","QQ","KK","AA"
+							  ],
+					"excards":[]
+				},
+				"6": {
+					"cards": ["AJ","AT",
+							  "KT","KJ","KQ",
+							  "QT","QJ",
+							  "JT", 
+							  "A9s", "A8s", "A7s", "A6s","A5s", "A4s","A3s", "A2s", 
+							  "K4s","K5s","K6s", "K7s","K8s","K9s", "KTs","KJs","KQs", 
+							  "Q8s","Q9s", "QTs","QJs",
+							  "J7s","J8s", "J9s","JTs",
+							  "T7s","T8s", "T9s",
+							  "98s",
+							  "22","33","44","55"
+							  ],
+					"excards":[]
+				},
+				"0": {
+					"cards": ["A2","A3","A4","A5","A6","A7","A8","A9",
+							  "K8","K9",
+							  "Q6s","Q7s",
+							  "T6s",
+							  "96s","97s",
+							  "86s","87s",
+							  "75s","76s",
+							  "65s"
+					],
+					"excards":[]
+				}
+
+			},
+		"2": {
+			"0": {
+				"cards": ["K4","K5","K6","K7",
+						  "Q9",
+						  "J9",
+						  "T9",
+						  "K2s","K3s",
+						  "Q2s","Q3s","Q4s","Q5s"
+						  ],
+				"excards":[]
+
+			}
+
+		}
+
+
+		},
+		"Op": {
+			"0": {
+				"7": {
+					"cards": ["AK","AQ",
+							  "AKs", "AQs",
+							  "TT","JJ","QQ","KK","AA"
+							  ],
+					"excards": []
+				},
+				"0": {
+					"cards": ["88", "99"]
+				}
+			},
+			"1": {
+				"7": {
+					"cards": ["77"],
+					"excards": []
+				},
+				"0": {
+					"cards": ["AJ",
+							  "AJs"],
+					"excards": []
+				}
+			},
+			"2": {
+				"7": {
+					"cards": ["AT",
+							  "KQ",
+							  "A7s","A8s","A9s","ATs",
+							  "KQs",
+							  "55","66"],
+					"excards": []
+				},
+				"0": {
+					"cards": ["A5","A6","A7","A8","A9",
+							  "KT","KJ",
+							  "QJ",
+							  "A5s","A6s",
+							  "KTs","KJs",
+							  "QJs"],
+					"excards": []
+				}
+			},
+			"3": {
+				"7": {
+					"cards": ["A2s","A3s","A4s",
+							  "22","33", "44"],
+					"excards": ["A5","A6","A7",
+								"KT","KJ",
+								"QJ",
+								"KTs","KJs",
+								"QJs"
+					]
+				},
+				"0": {
+					"cards": ["A2","A3","A4",
+							  "JT",
+							  "JTs"],
+					"excards": []
+				}
+			}
+		}
+
+	}
+}
