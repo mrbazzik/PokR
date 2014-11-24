@@ -481,7 +481,11 @@ Hand.prototype.nextStage = function(){
       var bankPart = this._bank/divider;
       var curSum = (bankPart <= winSum) ? bankPart : winSum;
       winner.player.makeWin(curSum, (i==0 && divider == 1));
+<<<<<<< HEAD
       arrWin.push(winner.player.getId()+" won "+curSum+" with "+winner.player.hand.toString());
+=======
+      arrWin.push("\n"+winner.player.getId()+" won "+curSum+" with "+winner.player.hand.toString());
+>>>>>>> 42e2cc8e06deb869893f215cb76111e2a21bba92
       this._bank -= curSum;
     }
     this._infoWin = arrWin.join("\n");
